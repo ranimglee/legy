@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firebase Google Login Test</title>
+    <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.1/firebase-auth-compat.js"></script>
+    <script>
+        // 🔧 Your Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAk32zfjCf8FAN8T2Xyc6yXwFx9W8roa5c",
+            authDomain: "legy-79c27.firebaseapp.com",
+            projectId: "legy-79c27"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider)
+                .then((result) => result.user.getIdToken())
+                .then((idToken) => {
+                    document.getElementById("token").value = idToken;
+                    console.log("Firebase ID Token:", idToken);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    alert("Login failed: " + error.message);
+                });
+        }
+    </script>
+</head>
+<body>
+<h2>Test Firebase Google Sign-In</h2>
+<button onclick="signInWithGoogle()">🔐 Sign in with Google</button>
+<p>Copy this token and use it in Swagger:</p>
+<textarea id="token" rows="10" style="width: 100%;"></textarea>
+</body>
+</html>

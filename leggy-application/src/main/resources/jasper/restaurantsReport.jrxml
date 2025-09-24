@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="restaurantsReport"
+              pageWidth="595" pageHeight="842" columnWidth="520">
+
+    <!-- Define styles -->
+    <style name="TitleStyle" fontSize="14" isBold="true" isItalic="true" fontName="Arial" />
+    <style name="DateStyle" fontSize="10" isItalic="true" fontName="Arial" />
+    <style name="FooterStyle" fontSize="8" isItalic="true" fontName="Arial" />
+    <style name="ColumnHeaderStyle" fontSize="12" isBold="true" fontName="Arial" />
+    <style name="DataStyle" fontSize="10" fontName="Arial" />
+
+    <!-- Define fields -->
+    <field name="rib" class="java.lang.String"/>
+    <field name="nom" class="java.lang.String"/>
+    <field name="adresse" class="java.lang.String"/>
+    <field name="telephone" class="java.lang.String"/>
+    <field name="commission" class="java.lang.Double"/>
+    <!-- Page Header: Title and Date -->
+    <pageHeader>
+        <band height="50">
+            <textField>
+                <reportElement x="0" y="10" width="595" height="30" style="TitleStyle"/>
+                <textFieldExpression><![CDATA["Restaurant Details Report"]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="500" y="10" width="180" height="30" style="DateStyle"/>
+                <textFieldExpression><![CDATA[new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date())]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageHeader>
+
+    <!-- Column Header: Column Names -->
+    <columnHeader>
+        <band height="40">
+            <staticText>
+                <reportElement x="0" y="5" width="100" height="30" style="ColumnHeaderStyle" backcolor="#f2f2f2"/>
+                <text><![CDATA[RIB]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="100" y="5" width="150" height="30" style="ColumnHeaderStyle" backcolor="#f2f2f2"/>
+                <text><![CDATA[Nom]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="200" y="5" width="100" height="30" style="ColumnHeaderStyle" backcolor="#f2f2f2"/>
+                <text><![CDATA[Téléphone]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="300" y="5" width="80" height="30" style="ColumnHeaderStyle" backcolor="#f2f2f2"/>
+                <text><![CDATA[Commission]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="380" y="5" width="150" height="30" style="ColumnHeaderStyle" backcolor="#f2f2f2"/>
+                <text><![CDATA[Adresse]]></text>
+            </staticText>
+
+
+        </band>
+    </columnHeader>
+
+    <!-- Detail Section: Restaurant Data -->
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="100" height="20" style="DataStyle"/>
+                <textFieldExpression><![CDATA[$F{rib}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="100" y="0" width="100" height="20" style="DataStyle"/>
+                <textFieldExpression><![CDATA[$F{nom}]]></textFieldExpression>
+            </textField>
+
+            <textField>
+                <reportElement x="200" y="0" width="100" height="20" style="DataStyle"/>
+                <textFieldExpression><![CDATA[$F{telephone}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="300" y="0" width="80" height="20" style="DataStyle"/>
+                <textFieldExpression><![CDATA[$F{commission}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="380" y="0" width="200" height="20" style="DataStyle"/>
+                <textFieldExpression><![CDATA[$F{adresse}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <!-- Report Footer: Page Number -->
+    <pageFooter>
+        <band height="30">
+            <textField>
+                <reportElement x="0" y="0" width="595" height="30" style="FooterStyle"/>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " of " + $V{PAGE_COUNT}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>

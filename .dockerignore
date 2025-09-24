@@ -1,0 +1,11 @@
+target/
+.git/
+*.iml
+*.class
+.idea/
+*.log
+**/target/*
+!**/target/*.jar
+**/.git
+**/.idea
+**/*.md

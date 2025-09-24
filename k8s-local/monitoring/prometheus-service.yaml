@@ -1,0 +1,17 @@
+# k8s-local/monitoring/prometheus-service.yaml
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-k8s
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: 9090
+      targetPort: web
+  selector:
+    prometheus: prometheus-k8s

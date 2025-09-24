@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Order Notifications</h1>
+<button id="connect">Connect</button>
+<ul id="messages"></ul>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+<script>
+    document.getElementById('connect').onclick = () => {
+        // 1) open SockJS → STOMP
+        const sock = new SockJS('http://localhost:8089/ws');
+        const client = Stomp.over(sock);
+
+        client.connect({}, () => {
+            console.log('STOMP connected');
+            // 2) subscribe to your user topic
+            client.subscribe(
+                '/topic/notifications/7e4e0b18-0c65-49df-9a81-c9c72b6dedba',
+                frame => {
+                    const note = JSON.parse(frame.body);
+                    const li = document.createElement('li');
+                    // display the human-friendly message field
+                    li.textContent = `${note.timestamp}: ${note.message}`;
+                    document.getElementById('messages').appendChild(li);
+                }
+            );
+        });
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Monthly Client Evolution</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="p-4">
+
+<div class="container">
+    <h1 class="mb-4">Monthly Client Evolution</h1>
+
+    <canvas id="clientEvolutionChart" height="100"></canvas>
+</div>
+
+<script>
+    async function fetchMonthlyData() {
+        try {
+
+            const token = localStorage.getItem('jwtToken');  // ← clé correcte ici
+            console.log('Token:', token);
+
+            const response = await fetch('/api/moderateur/restaurants/evolution/monthly', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,  // add token to header
+                    'Content-Type': 'application/json'
+                }
+            });
+
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+
+            // Data is an object like { "2025-03": 3358, "2025-04": 3471, ... }
+            return data;
+        } catch (error) {
+            console.error('Fetch error:', error);
+            return {};
+        }
+    }
+
+    function renderChart(data) {
+        const ctx = document.getElementById('clientEvolutionChart').getContext('2d');
+
+        // Sort months chronologically
+        const months = Object.keys(data).sort();
+
+        // Get counts in the sorted order
+        const counts = months.map(month => data[month]);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Clients Created',
+                    data: counts,
+                    fill: false,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    tension: 0.2,
+                    pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Clients'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month (YYYY-MM)'
+                        }
+                    }
+                },
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        enabled: true,
+                    }
+                }
+            }
+        });
+    }
+
+    // Load data and render chart
+    fetchMonthlyData().then(data => renderChart(data));
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Shifts</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .shift-card {
+            min-width: 160px;
+            margin-right: 1rem;
+        }
+        .shift-type {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .day-label {
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="mb-4">Generate Weekly Shifts</h2>
+        <form id="generateWeekForm">
+            <div class="mb-3">
+                <label for="zoneId" class="form-label">Zone ID</label>
+                <input type="text" class="form-control" id="zoneId" required>
+            </div>
+            <div class="mb-3">
+                <label for="startDate" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="startDate" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Shifts</button>
+        </form>
+        <div class="mt-3" id="responseMessage"></div>
+        <div class="d-flex flex-wrap mt-4" id="shiftsCardContainer"></div>
+    </div>
+</div>
+
+<script>
+    const shiftTypeEmojis = {
+        MORNING: "🌞 Matin",
+        PEAK_LUNCH: "🍽️ Peak Déjeuner",
+        AFTERNOON: "🌤️ Après-midi",
+        PEAK_DINNER: "🌙 Peak diner",
+        NIGHT: "🌚 Nuit"
+    };
+
+    const getDayLabel = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric' }).toUpperCase();
+    };
+
+    document.getElementById("generateWeekForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const zoneId = document.getElementById("zoneId").value;
+        const startDate = document.getElementById("startDate").value;
+
+        const token = localStorage.getItem("jwtToken");
+        const messageElement = document.getElementById("responseMessage");
+        const cardContainer = document.getElementById("shiftsCardContainer");
+
+        if (!token) {
+            messageElement.innerHTML = `<div class="alert alert-warning">JWT token not found. Please login first.</div>`;
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/shifts/generate-week?zoneId=${zoneId}&startDate=${startDate}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const shifts = await response.json();
+                messageElement.innerHTML = `<div class="alert alert-success">Shifts generated successfully (${shifts.length})</div>`;
+
+                // Group by date
+                const grouped = {};
+                shifts.forEach(shift => {
+                    if (!grouped[shift.date]) grouped[shift.date] = [];
+                    grouped[shift.date].push(shift);
+                });
+
+                // Sort dates
+                const sortedDates = Object.keys(grouped).sort();
+
+                // Render cards
+                cardContainer.innerHTML = '';
+                sortedDates.forEach(date => {
+                    const card = document.createElement('div');
+                    card.className = 'shift-card card p-3 mb-3';
+
+                    const dayLabel = document.createElement('div');
+                    dayLabel.className = 'day-label mb-2 text-center';
+                    dayLabel.textContent = getDayLabel(date);
+                    card.appendChild(dayLabel);
+
+                    grouped[date].forEach(shift => {
+                        const shiftBlock = document.createElement('div');
+                        shiftBlock.className = 'shift-type';
+                        shiftBlock.textContent = shiftTypeEmojis[shift.shiftType] || shift.shiftType;
+                        card.appendChild(shiftBlock);
+                    });
+
+                    cardContainer.appendChild(card);
+                });
+
+            } else {
+                const errorText = await response.text();
+                messageElement.innerHTML = `<div class="alert alert-danger">Error ${response.status}: ${errorText}</div>`;
+            }
+        } catch (error) {
+            messageElement.innerHTML = `<div class="alert alert-danger">Network error: ${error.message}</div>`;
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Suivi du livreur – Road-Level Animation</title>
+    <style>
+        /* La carte occupe tout l’écran */
+        html, body, #map {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+    let map, marker, directionsService, prevPos = null, animating = false;
+
+    function initMap() {
+        const params = new URLSearchParams(window.location.search);
+        const livreurId = params.get('livreurId');
+        if (!livreurId) {
+            alert('Paramètre manquant : livreurId');
+            return;
+        }
+
+        // Initialise la map
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 0, lng: 0},
+            zoom: 14
+        });
+        marker = new google.maps.Marker({map});
+        directionsService = new google.maps.DirectionsService();
+
+        // Lance la boucle de tracking
+        fetchPosition(livreurId);
+        setInterval(() => fetchPosition(livreurId), 5000);
+    }
+
+    function fetchPosition(id) {
+        fetch(`/api/v1/livreurs/${id}/position`)
+            .then(res => {
+                if (res.status === 200) return res.json();
+                // pas de donnée => on ignore
+                return null;
+            })
+            .then(data => {
+                if (!data) return;
+                const newPos = {
+                    lat: parseFloat(data.latitude),
+                    lng: parseFloat(data.longitude)
+                };
+
+                // Si on a déjà une position précédente, calcule l’itinéraire routier
+                if (prevPos && !animating) {
+                    animating = true;
+                    directionsService.route({
+                        origin: prevPos,
+                        destination: newPos,
+                        travelMode: 'DRIVING'
+                    }, (result, status) => {
+                        if (status === 'OK' && result.routes.length) {
+                            const path = result.routes[0].overview_path;
+                            animateAlong(path);
+                        } else {
+                            // fallback : téléporte
+                            marker.setPosition(newPos);
+                            prevPos = newPos;
+                            animating = false;
+                        }
+                    });
+                } else if (!prevPos) {
+                    // 1re position : place le marqueur sans animation
+                    marker.setPosition(newPos);
+                    map.panTo(newPos);
+                    prevPos = newPos;
+                }
+            })
+            .catch(err => console.error('Erreur fetchPosition:', err));
+    }
+
+    function animateAlong(path) {
+        let i = 0;
+        const step = () => {
+            marker.setPosition(path[i]);
+            map.panTo(path[i]);
+            i++;
+            if (i < path.length) {
+                // ajuste la vitesse ici (en ms)
+                setTimeout(step, 500);
+            } else {
+                // fin de l’animation
+                prevPos = path[path.length - 1];
+                animating = false;
+            }
+        };
+        step();
+    }
+</script>
+
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCX28rwkL8_jds7KQDL9iV6V_z21f-FKRA&callback=initMap">
+</script>
+</body>
+</html>

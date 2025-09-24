@@ -1,0 +1,37 @@
+# k8s-local/monitoring/prometheus-k8s.yaml
+
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus-k8s
+  namespace: monitoring
+spec:
+  replicas: 1
+  serviceAccountName: prometheus-operator
+
+  serviceMonitorSelector: {}       # scrappe tous les ServiceMonitor
+  podMonitorSelector: {}           # scrappe tous les PodMonitor
+
+  resources:
+    requests:
+      memory: "400Mi"
+      cpu:    "200m"
+
+  storage:
+    volumeClaimTemplate:
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+
+  ruleSelector: {}
+  alerting:
+    alertmanagers:
+      - namespace: monitoring
+        name: alertmanager-main
+        port: web
+
+  securityContext:
+    runAsNonRoot: true
+    fsGroup: 2000

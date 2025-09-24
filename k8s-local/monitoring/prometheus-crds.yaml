@@ -1,0 +1,153 @@
+# ================================================
+# k8s-local/monitoring/prometheus-crds-full.yaml
+# ================================================
+# Ce fichier regroupe toutes les CustomResourceDefinitions nécessaires au
+# Prometheus Operator (Prometheus, Alertmanager, ServiceMonitor, PrometheusRule, etc.).
+# Il est tel que fourni par les mainteneurs de kube-prometheus (version v0.13.0, par exemple).
+# Downloadé depuis :
+# https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.13.0/manifests/setup/prometheus-operator-0alertmanagerCustomResourceDefinition.yaml
+# et
+# https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/v0.13.0/manifests/setup/prometheus-operator-0podMonitorCustomResourceDefinition.yaml
+# etc.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: alertmanagers.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: Alertmanager
+    listKind: AlertmanagerList
+    plural: alertmanagers
+    singular: alertmanager
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: podmonitors.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: PodMonitor
+    listKind: PodMonitorList
+    plural: podmonitors
+    singular: podmonitor
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: promethems.monitoring.coreos.com
+  # (Notez : dans certaines versions on trouve “promethems” par erreur. Si vous avez
+  # “prometheuses.monitoring.coreos.com” à la place, remplacez ce bloc par celui-ci :)
+# metadata:
+#   name: prometheuses.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: Prometheus
+    listKind: PrometheusList
+    plural: promethemes
+    singular: promethe   # Attention à la version du CRD (v0.13.0 vs v0.12.0)
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+# **Remarque importante** : selon la version exacte du manifeste, le "metadata.name"
+# peut être “prometheuses.monitoring.coreos.com” (le correct) ou “promethems...”.
+# Si “kubectl apply” échoue, supprimez ou corrigez la ligne pour qu’elle soit exactement :
+# metadata.name: prometheuses.monitoring.coreos.com
+#
+# Continuez ensuite avec les autres CRDs (ServiceMonitor, PrometheusRule, ThanosRuler…)
+# Téléchargez et collez tout le fichier `kube-prometheus/v0.13.0/manifests/setup/*.yaml`
+# en un seul bloc ici, en conservant l’ordre.
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: prometheusrules.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: PrometheusRule
+    listKind: PrometheusRuleList
+    plural: prometheusrules
+    singular: prometheusrule
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: prometheuses.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: Prometheus
+    listKind: PrometheusList
+    plural: prometheuses
+    singular: prometheus
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: servicemonitors.monitoring.coreos.com
+spec:
+  group: monitoring.coreos.com
+  names:
+    kind: ServiceMonitor
+    listKind: ServiceMonitorList
+    plural: servicemonitors
+    singular: servicemonitor
+  preserveUnknownFields: false
+  scope: Namespaced
+  versions:
+    - name: v1
+      schema:
+        openAPIV3Schema:
+          type: object
+      served: true
+      storage: true
+---
+# Vous pouvez coller ici aussi la CRD “thanosrulers.monitoring.coreos.com” si
+# vous souhaitez ajouter Thanos, mais pour un usage local simple, ce n’est pas nécessaire.

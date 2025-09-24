@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Moderator Notifications (JWT Auth)</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        input, button { margin-top: 10px; padding: 8px; width: 100%; }
+        .notification { border: 1px solid #ccc; padding: 10px; margin-top: 10px; }
+        #status { margin-top: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<h1>🔔 Moderator Notification Panel</h1>
+
+<label for="jwtTokenInput">JWT Token</label>
+<input type="text" id="jwtTokenInput" placeholder="Paste your JWT token here" />
+
+<button onclick="connect()">🔗 Connect & Subscribe</button>
+<button onclick="disconnect()">🔌 Disconnect</button>
+
+<div id="status"></div>
+<div id="notifications"></div>
+
+<script>
+    let stompClient = null;
+
+    function connect() {
+        const token = document.getElementById("jwtTokenInput").value.trim();
+        if (!token) {
+            alert("Please enter a valid JWT token.");
+            return;
+        }
+
+        const socket = new SockJS("http://localhost:8080/ws"); // no token in URL
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        // Pass the token in the CONNECT headers:
+        stompClient.connect(
+            { Authorization: `Bearer ${token}` },
+            function (frame) {
+                document.getElementById("status").innerHTML = "✅ Connected: " + frame.headers['user-name'];
+
+                stompClient.subscribe("/topic/order-issues", function (message) {
+                    console.log("WebSocket message received:", message.body);
+                    try {
+                        const notification = JSON.parse(message.body);
+                        showNotification(notification);
+                    } catch (e) {
+                        console.error("Failed to parse notification:", e);
+                    }
+                });
+
+            },
+            function (error) {
+                document.getElementById("status").innerHTML = "❌ Connection failed";
+                console.error("Connection error", error);
+            }
+        );
+    }
+
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect(() => {
+                document.getElementById("status").innerHTML = "🔌 Disconnected";
+                console.log("Disconnected");
+            });
+        }
+    }
+
+    function showNotification(notification) {
+        const div = document.createElement("div");
+        div.className = "notification";
+        div.innerHTML = `
+            <strong>${notification.title || "New Notification"}</strong><br>
+            ${notification.body || "No message body"}<br>
+            <em>Ref: ${notification.issueRef || "N/A"}</em>
+        `;
+        document.getElementById("notifications").appendChild(div);
+    }
+</script>
+</body>
+</html>

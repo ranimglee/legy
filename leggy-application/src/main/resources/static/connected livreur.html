@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Multi-Livreur Simulator</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .livreur-box {
+      border: 1px solid #ccc;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h2>📦 Livreur Simulator (Single Tab)</h2>
+
+  <form id="livreurForm">
+    <label>JWT:</label><br>
+    <input type="text" id="jwt" required style="width: 500px;"><br>
+    <label>Latitude:</label><br>
+    <input type="text" id="lat" required><br>
+    <label>Longitude:</label><br>
+    <input type="text" id="lon" required><br><br>
+    <button type="submit">➕ Add Livreur</button>
+  </form>
+
+  <hr>
+  <div id="livreurs"></div>
+
+  <script>
+    let clients = [];
+
+    function addLivreurBox(id, lat, lon) {
+      const div = document.createElement("div");
+      div.className = "livreur-box";
+      div.id = id;
+      div.innerHTML = `
+        <p><strong>ID:</strong> ${id}</p>
+        <p>Status: <span class="status">Connecting...</span></p>
+        <p>Lat: <span class="lat">${lat}</span> | Lon: <span class="lon">${lon}</span></p>
+        <button onclick="disconnectLivreur('${id}')">❌ Disconnect</button>
+      `;
+      document.getElementById("livreurs").appendChild(div);
+    }
+
+    function updateStatus(id, text) {
+      document.querySelector(`#${id} .status`).innerText = text;
+    }
+
+    function updateLocationDisplay(id, lat, lon) {
+      document.querySelector(`#${id} .lat`).innerText = lat;
+      document.querySelector(`#${id} .lon`).innerText = lon;
+    }
+
+    function disconnectLivreur(id) {
+      const clientObj = clients.find(c => c.id === id);
+      if (clientObj && clientObj.client && clientObj.client.connected) {
+        clientObj.client.send("/app/livreur/force-logout", {}, "");
+        clearInterval(clientObj.interval);
+        setTimeout(() => {
+          clientObj.client.disconnect(() => {
+            console.log(`📴 ${id} disconnected`);
+            updateStatus(id, "Disconnected");
+          });
+        }, 500);
+
+      }
+    }
+
+    document.getElementById("livreurForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const jwt = document.getElementById("jwt").value;
+      const lat = document.getElementById("lat").value;
+      const lon = document.getElementById("lon").value;
+      const id = `livreur-${clients.length + 1}`;
+
+      addLivreurBox(id, lat, lon);
+
+      const socket = new SockJS("http://localhost:8080/ws");
+      const client = Stomp.over(socket);
+
+      client.connect({
+        Authorization: "Bearer " + jwt,
+        latitude: lat,
+        longitude: lon
+      }, (frame) => {
+        console.log(`✅ ${id} connected`);
+        updateStatus(id, "Connected");
+
+        // Periodic updates
+        const interval = setInterval(() => {
+          if (client.connected) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+              const latNew = pos.coords.latitude.toFixed(6);
+              const lonNew = pos.coords.longitude.toFixed(6);
+
+              client.send("/app/livreur/update-location", {}, JSON.stringify({
+                latitude: latNew,
+                longitude: lonNew
+              }));
+
+              updateLocationDisplay(id, latNew, lonNew);
+              console.log(`📤 ${id} sent updated location: ${latNew}, ${lonNew}`);
+            });
+          }
+        }, 15000);
+
+        clients.push({ id, client, interval });
+      }, (error) => {
+        console.error(`❌ ${id} connection failed`, error);
+        updateStatus(id, "Connection failed ❌");
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Real-Time Connected Livreurs</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    table { width: 80%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    th { background-color: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>📡 Real-Time Connected Livreurs</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Longitude</th>
+        <th>Latitude</th>
+      </tr>
+    </thead>
+    <tbody id="livreurTableBody">
+      <!-- Livreurs will be added here -->
+    </tbody>
+  </table>
+
+  <script>
+    let stompClient = null;
+    const livreurs = new Map(); // Store by ID
+
+    function connect() {
+  // Initial load from REST
+  fetch("http://localhost:8080/api/auth/connected-livreurs")
+  .then(res => res.json())
+  .then(data => {
+    data.forEach(livreur => {
+      if (livreur.latitude !== "-" && livreur.longitude !== "-") {
+        livreurs.set(livreur.id, livreur);
+      }
+    });
+    updateTable();
+  });
+
+
+  const socket = new SockJS("http://localhost:8080/ws");
+  stompClient = Stomp.over(socket);
+
+  stompClient.connect({}, () => {
+    console.log("🟢 Connected to WebSocket");
+
+    stompClient.subscribe("/topic/livreurs/connected", (message) => {
+      const data = JSON.parse(message.body);
+      livreurs.set(data.id, data);
+      updateTable();
+    });
+
+    stompClient.subscribe("/topic/livreurs/disconnected", (message) => {
+      const id = message.body;
+      livreurs.delete(id);
+      updateTable();
+    });
+  }, (error) => {
+    console.error("🔴 WebSocket error", error);
+  });
+}
+
+    const socket = new SockJS("http://localhost:8080/ws");
+      stompClient = Stomp.over(socket);
+
+      stompClient.connect({}, () => {
+        console.log("🟢 Connected to WebSocket");
+
+        stompClient.subscribe("/topic/livreurs/connected", (message) => {
+          const data = JSON.parse(message.body);
+          livreurs.set(data.id, data);
+          updateTable();
+        });
+        stompClient.subscribe("/topic/livreurs/disconnected", (message) => {
+      const id = message.body;
+      livreurs.delete(id);
+      updateTable();
+    });
+      }, (error) => {
+        console.error("🔴 WebSocket error", error);
+      });
+    
+
+    function updateTable() {
+      const tbody = document.getElementById("livreurTableBody");
+      tbody.innerHTML = ""; // Clear table
+
+      livreurs.forEach(livreur => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+  <td>${livreur.id}</td>
+  <td>${livreur.longitude}</td>
+  <td>${livreur.latitude}</td>
+`;
+
+        tbody.appendChild(row);
+      });
+    }
+
+    window.onload = connect;
+  </script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FCM Test</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+</head>
+<body>
+<h1>FCM Token Generator</h1>
+<button onclick="requestPermission()">Get FCM Token</button>
+<script>
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+        apiKey: "AIzaSyCGI553X9W_Y73PQmmXNFDpUKRyjeAHsNY",
+        authDomain: "legy-79c27.firebaseapp.com",
+        projectId: "legy-79c27",
+        storageBucket: "legy-79c27.firebasestorage.app",
+        messagingSenderId: "540049131134",
+        appId: "1:540049131134:web:221a2bdca704cefe317a2f",
+        measurementId: "G-9FW6DSH9LL"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    async function requestPermission() {
+        try {
+            console.log("🔔 Requesting notification permission...");
+            const permission = await Notification.requestPermission();
+
+            if (permission !== "granted") {
+                alert("Permission denied");
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+            console.log("✅ Service Worker registered:", registration);
+            console.log("Service worker active:", registration.active);
+
+            const token = await messaging.getToken({
+                vapidKey: "BAood1iEPR39jDk7fX215kx1KWRgIFizzXTKdlNKe8OoapouQwGoBx3VpCthO0kDnr73FbQX7Wszjb8L3PlcxNw",
+                serviceWorkerRegistration: registration
+            }).catch(err => {
+                console.error("Failed to get FCM token:", err);
+            });
+
+            if (token) {
+                console.log("✅ FCM Token:", token);
+                alert("Token generated and logged in console");
+                await sendTokenToBackend(token);
+            } else {
+                console.warn("⚠️ No FCM token returned");
+            }
+
+        } catch (err) {
+            console.error("❌ Error getting FCM token:", err);
+        }
+    }
+
+    async function sendTokenToBackend(token) {
+        try {
+            const jwtToken = localStorage.getItem("jwtToken");
+            if (!jwtToken) {
+                console.error("❌ JWT token not found in localStorage");
+                return;
+            }
+
+            const response = await fetch("/api/v1/driver/fcm-token", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + jwtToken
+                },
+                body: JSON.stringify({ token: token })
+            });
+
+            if (response.ok) {
+                console.log("📨 Token sent to backend successfully");
+            } else {
+                console.error("❌ Failed to send token. Status:", response.status);
+            }
+        } catch (err) {
+            console.error("❌ Error sending token to backend:", err);
+        }
+    }
+
+    messaging.onMessage(payload => {
+        console.log("📩 Foreground message received:", payload);
+
+        if (payload.notification) {
+            const { title, body, icon } = payload.notification;
+
+            if (Notification.permission === "granted") {
+                new Notification(title, {
+                    body: body,
+                    icon: icon || "/logo192.png"
+                });
+            }
+        } else {
+            console.log("No notification payload available.");
+        }
+    });
+</script>
+</body>
+</html>

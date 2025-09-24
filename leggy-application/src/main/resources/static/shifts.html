@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Shift Selection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .shift-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .day-header {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-4">📅 Weekly Shift Selection</h3>
+
+    <div class="text-center mb-3">
+        <input type="date" id="weekStartInput" class="form-control w-25 d-inline-block">
+        <button class="btn btn-primary ms-2" onclick="loadShifts()">Load Shifts</button>
+    </div>
+
+    <div class="row" id="shiftContainer"></div>
+
+    <div class="text-center mt-4">
+        <button class="btn btn-success" onclick="submitSelectedShifts()">Submit Selection</button>
+    </div>
+</div>
+
+<script>
+    let selectedShifts = {}; // { date: [shiftId1, shiftId2, ...] }
+
+    async function loadShifts() {
+        const token = localStorage.getItem("jwtToken");
+        if (!token) {
+            alert("JWT token not found. Please login first.");
+            return;
+        }
+
+        const weekStart = document.getElementById('weekStartInput').value;
+        if (!weekStart) {
+            alert("Please select a start date.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/shifts/livreur/upcoming?weekStart=${weekStart}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) throw new Error("Failed to fetch shifts");
+            const days = await response.json();
+            renderShiftCards(days);
+        } catch (error) {
+            console.error('Error loading shifts:', error);
+            alert("Failed to load shifts: " + error.message);
+        }
+    }
+
+    function renderShiftCards(days) {
+        const container = document.getElementById('shiftContainer');
+        container.innerHTML = '';
+        selectedShifts = {};
+
+        days.forEach(day => {
+            selectedShifts[day.date] = [];
+
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+
+            const card = document.createElement('div');
+            card.className = 'shift-card';
+
+            const header = document.createElement('div');
+            header.className = 'day-header';
+            header.innerHTML = `${day.day} <br><span class="text-muted">${day.date}</span>`;
+            card.appendChild(header);
+
+            const form = document.createElement('div');
+
+            const dayOffShift = day.shifts.find(shift => shift.shiftType === 'DAY_OFF');
+
+            if (dayOffShift) {
+                const dayOffCheckbox = document.createElement('input');
+                dayOffCheckbox.type = 'checkbox';
+                dayOffCheckbox.className = 'form-check-input me-1';
+                dayOffCheckbox.value = dayOffShift.shiftId;
+                dayOffCheckbox.disabled = !dayOffShift.available;
+                dayOffCheckbox.onchange = (e) => {
+                    if (e.target.checked) {
+                        selectedShifts[day.date] = [dayOffShift.shiftId];
+                        document.querySelectorAll(`.shift-checkbox-${day.date}`).forEach(cb => cb.checked = false);
+                    } else {
+                        selectedShifts[day.date] = [];
+                    }
+                };
+
+                const dayOffLabel = document.createElement('label');
+                dayOffLabel.className = 'form-check-label text-danger me-3';
+                dayOffLabel.innerText = '🛌 Day Off (whole day)';
+
+                const dayOffWrapper = document.createElement('div');
+                dayOffWrapper.className = 'form-check mb-1';
+                dayOffWrapper.appendChild(dayOffCheckbox);
+                dayOffWrapper.appendChild(dayOffLabel);
+                form.appendChild(dayOffWrapper);
+            }
+
+            day.shifts.forEach(shift => {
+                if (shift.shiftType === 'DAY_OFF') return; // skip extra
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = `form-check-input me-1 shift-checkbox-${day.date}`;
+                checkbox.disabled = !shift.available;
+                checkbox.value = shift.shiftId;
+                checkbox.onchange = (e) => {
+                    const hasDayOff = selectedShifts[day.date].length === 1 &&
+                        dayOffShift && selectedShifts[day.date][0] === dayOffShift.shiftId;
+
+                    if (hasDayOff) {
+                        e.target.checked = false;
+                        alert("⚠️ Cannot select work shifts on a day marked as Day Off.");
+                        return;
+                    }
+
+                    if (e.target.checked) {
+                        selectedShifts[day.date].push(shift.shiftId);
+                    } else {
+                        selectedShifts[day.date] = selectedShifts[day.date].filter(id => id !== shift.shiftId);
+                    }
+                };
+
+                const label = document.createElement('label');
+                label.className = 'form-check-label me-3';
+                label.innerText = `${formatShiftType(shift.shiftType)} (${shift.startTime} - ${shift.endTime})`;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'form-check mb-1';
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(label);
+
+                form.appendChild(wrapper);
+            });
+
+            card.appendChild(form);
+            col.appendChild(card);
+            container.appendChild(col);
+        });
+    }
+
+    function formatShiftType(type) {
+        switch (type) {
+            case 'MORNING': return '🌞 Morning';
+            case 'PEAK_LUNCH': return '🍽️ Lunch Peak';
+            case 'AFTERNOON': return '☀️ Afternoon';
+            case 'PEAK_DINNER': return '🍽️ Dinner Peak';
+            case 'NIGHT': return '🌙 Night';
+            case 'DAY_OFF': return '🛌 Day Off';
+            default: return type;
+        }
+    }
+
+    async function submitSelectedShifts() {
+        const token = localStorage.getItem("jwtToken");
+        if (!token) {
+            alert("JWT token not found. Please login first.");
+            return;
+        }
+
+        let shiftIds = [];
+        let dayOffCount = 0;
+
+        for (const [date, ids] of Object.entries(selectedShifts)) {
+            if (ids.length === 1 && ids[0].startsWith('DAY_OFF')) {
+                dayOffCount++;
+            } else {
+                shiftIds = shiftIds.concat(ids);
+            }
+        }
+
+        if (Object.values(selectedShifts).flat().filter(id => id).length === 0) {
+            alert("Please select at least one shift.");
+            return;
+        }
+
+        if (dayOffCount > 1) {
+            alert("⚠️ You can only select one day off per week.");
+            return;
+        }
+
+        // Add day off shiftIds too
+        Object.values(selectedShifts).forEach(ids => {
+            shiftIds = shiftIds.concat(ids);
+        });
+
+        try {
+            const response = await fetch('/api/shifts/livreur/request/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ shiftIds })
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text || "Batch shift request failed");
+            }
+
+            alert("✅ Selection submitted successfully!");
+            loadShifts();
+        } catch (error) {
+            alert("❌ Error: " + error.message);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Two-Step Manager & Restaurant Registration</title>
+    <style>
+        .step { display: none; }
+        .step.active { display: block; }
+    </style>
+</head>
+<body>
+<h1>Register Manager & Restaurant</h1>
+
+<!-- STEP 1: Register Manager -->
+<div class="step active" id="step1">
+    <h2>Step 1: Restaurant Manager Info</h2>
+    <form id="managerForm">
+        <label>Username: <input type="text" name="username" required></label><br><br>
+        <label>First Name: <input type="text" name="firstname" required></label><br><br>
+        <label>Last Name: <input type="text" name="lastname" required></label><br><br>
+        <label>Email: <input type="email" name="email" required></label><br><br>
+        <label>Phone Number: <input type="text" name="phoneNumber" required></label><br><br>
+        <label>RIB: <input type="text" name="rib" required></label><br><br>
+        <button type="submit">Next ➡️</button>
+    </form>
+</div>
+
+<!-- STEP 2: Register Restaurant -->
+<div class="step" id="step2">
+    <h2>Step 2: Restaurant Info</h2>
+    <form id="restaurantForm">
+        <label>Restaurant Name: <input type="text" name="nom" required></label><br><br>
+        <label>Address: <input type="text" name="adresse" required></label><br><br>
+        <label>Telephone: <input type="text" name="telephone" required></label><br><br>
+        <label>Email: <input type="email" name="email" required></label><br><br>
+        <label>Commission (%): <input type="number" name="commission" value="10" required></label><br><br>
+        <label>ID Fisc: <input type="text" name="idFisc" required></label><br><br>
+        <label>Main Cuisine Type:
+            <select name="mainCuisineType" required>
+                <option value="SENEGALESE">SENEGALESE</option>
+                <option value="INTERNATIONALE">INTERNATIONALE</option>
+                <option value="SAINE">SAINE</option>
+                <option value="DESSERT">DESSERT</option>
+            </select>
+        </label><br><br>
+        <button type="submit">Submit Restaurant ✅</button>
+    </form>
+</div>
+
+<p id="response"></p>
+
+<script>
+    let managerId = null;
+
+    const step1 = document.getElementById("step1");
+    const step2 = document.getElementById("step2");
+    const responseBox = document.getElementById("response");
+
+    // Step 1: Register Manager
+    document.getElementById("managerForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const token = localStorage.getItem("jwtToken");
+
+        const managerData = {
+            username: form.username.value,
+            firstname: form.firstname.value,
+            lastname: form.lastname.value,
+            email: form.email.value,
+            phoneNumber: form.phoneNumber.value,
+            rib: form.rib.value,
+            createdBy: "moderator-1234-abcd"
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/api/users/register-restaurant-manager", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(managerData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                managerId = result.id || result.managerId || result.userId;
+                step1.classList.remove("active");
+                step2.classList.add("active");
+                responseBox.textContent = `✅ Manager registered: ${result.username}. Now register the restaurant.`;
+            } else {
+                responseBox.textContent = `❌ Error: ${result.message || JSON.stringify(result)}`;
+            }
+        } catch (err) {
+            console.error(err);
+            responseBox.textContent = "❌ Network or server error.";
+        }
+    });
+
+    // Step 2: Register Restaurant
+    document.getElementById("restaurantForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const form = e.target;
+        const token = localStorage.getItem("jwtToken");
+
+        const restaurantData = {
+            nom: form.nom.value,
+            adresse: form.adresse.value,
+            telephone: form.telephone.value,
+            email: form.email.value,
+            commission: parseFloat(form.commission.value),
+            idFisc: form.idFisc.value,
+            mainCuisineType: form.mainCuisineType.value,
+            createdby: managerId,
+            managerId: managerId,
+            availability: "UNAVAILABLE"
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/restaurant/add-restaurant", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(restaurantData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                responseBox.textContent = `✅ Restaurant registered: ${result.nom}`;
+            } else {
+                responseBox.textContent = `❌ Error: ${result.message || JSON.stringify(result)}`;
+            }
+        } catch (err) {
+            console.error(err);
+            responseBox.textContent = "❌ Network or server error.";
+        }
+    });
+</script>
+</body>
+</html>
