@@ -49,14 +49,6 @@ pipeline {
 
 
 
-       stage('Run Dependencies') {
-           steps {
-               sh '''
-                 docker compose down
-                 docker compose up -d
-               '''
-           }
-       }
 
 
        stage('Push to DockerHub') {
@@ -73,10 +65,14 @@ pipeline {
 
 
         stage('Run Dependencies') {
-            steps {
-                sh 'docker compose up -d'
-            }
-        }
+                 steps {
+                     sh '''
+                       docker compose down
+                       docker compose up -d
+                     '''
+                 }
+             }
+
 
         stage('Run App Container') {
             steps {
