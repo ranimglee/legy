@@ -12,6 +12,9 @@
 /dataSources.local.xml
  target/
 
+# .gitignore
+src/main/resources/firebase/firebase-adminsdk.json
+src/main/resources/application.properties
 
  # Build outputs
  *.jar
