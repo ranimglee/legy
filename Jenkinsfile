@@ -49,11 +49,15 @@ pipeline {
 
 
 
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${IMAGE_NAME}:latest ."
-            }
-        }
+       stage('Run Dependencies') {
+           steps {
+               sh '''
+                 docker compose down
+                 docker compose up -d
+               '''
+           }
+       }
+
 
        stage('Push to DockerHub') {
            steps {
@@ -119,12 +123,7 @@ pipeline {
     }
 
     post {
-        always {
-            jacoco execPattern: '**/target/*.exec',     // Code coverage
-                   classPattern: '**/target/classes',
-                   sourcePattern: '**/src/main/java',
-                   inclusionPattern: '**/*.class'
-         }
+
         failure {
             echo '❌ Pipeline failed!'
         }
