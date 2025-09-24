@@ -26,6 +26,7 @@ public class PaymentDomainService {
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
 
+    private static final String PAYMENT_NOT_FOUND ="Payment not found";
 
 
     /**
@@ -131,19 +132,19 @@ public class PaymentDomainService {
         if (type != null) {
             payments = payments.stream()
                     .filter(payment -> type.equalsIgnoreCase(payment.getType().name()))
-                    .collect(Collectors.toList());
+                    .toList();
             log.info("Payments after filtering by type '{}': {}", type, payments.size());
         }
 
         if (status != null) {
             payments = payments.stream()
                     .filter(payment -> status.equalsIgnoreCase(payment.getStatus().name()))
-                    .collect(Collectors.toList());
+                    .toList();
             log.info("Payments after filtering by status '{}': {}", status, payments.size());
         }
                 payments = payments.stream()
                 .filter(payment -> isSameDay(date, payment.getDate()))
-                .collect(Collectors.toList());
+                .toList();
 
 
         log.info("Final payments count: {}", payments.size());
@@ -185,9 +186,9 @@ public class PaymentDomainService {
     /**
      * Modify payment details (amount, date, payment method, beneficiary).
      */
-    public Payment modifyPayment(String paymentId, Double amount, Date newDate, PaymentMethod method, String beneficiary) {
+    public Payment modifyPayment(String paymentId, Double amount, Date newDate, String beneficiary) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException("Payment not found"));
+                .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND));
 
         if (amount != null && amount <= 0) {
             throw new InvalidPaymentDataException("Payment amount must be greater than zero.");
@@ -208,7 +209,7 @@ public class PaymentDomainService {
      */
     public Payment postponePayment(String paymentId, Date newDate) {
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentNotFoundException("Payment not found"));
+                .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND));
 
         payment.setDate(newDate);
         payment = paymentRepository.save(payment);
@@ -239,7 +240,7 @@ public class PaymentDomainService {
                     payment.setStatus(PaymentStatus.CANCELED);  // Update status
                     return paymentRepository.save(payment);
                 })
-                .orElseThrow(() -> new PaymentNotFoundException("Payment not found"));
+                .orElseThrow(() -> new PaymentNotFoundException(PAYMENT_NOT_FOUND));
     }
 
     public List<Payment> getProcessingPayments() {

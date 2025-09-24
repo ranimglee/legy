@@ -47,12 +47,11 @@ public class GetPaymentsUseCase {
      * @param paymentId The ID of the payment to modify.
      * @param amount     The new amount of the payment.
      * @param newDate    The new date of the payment.
-     * @param method     The new payment method.
      * @param beneficiary The new payment beneficiary.
      * @return The modified payment.
      */
-    public Payment modifyPayment(String paymentId, Double amount, Date newDate, PaymentMethod method, String beneficiary) {
-        return paymentDomainService.modifyPayment(paymentId, amount, newDate, method, beneficiary);
+    public Payment modifyPayment(String paymentId, Double amount, Date newDate, String beneficiary) {
+        return paymentDomainService.modifyPayment(paymentId, amount, newDate, beneficiary);
     }
 
     /**

@@ -113,11 +113,10 @@ public class PaymentController {
             @PathVariable String paymentId,
             @RequestParam(required = false) Double amount,
             @RequestParam(required = false) Date newDate,
-            @RequestParam(required = false) PaymentMethod method,
             @RequestParam(required = false) String beneficiary) {
 
         try {
-            Payment updatedPayment = getPaymentsUseCase.modifyPayment(paymentId, amount, newDate, method, beneficiary);
+            Payment updatedPayment = getPaymentsUseCase.modifyPayment(paymentId, amount, newDate, beneficiary);
             return ResponseEntity.ok(new PaymentResponse("Payment updated successfully", List.of(updatedPayment)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
