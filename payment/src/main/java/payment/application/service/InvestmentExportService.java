@@ -24,20 +24,21 @@ import java.util.Map;
 public class InvestmentExportService {
 
     private final InvestmentRepository investmentRepository;
+    private static final String INVESTMENTS_TEMPLATE = "investments_template.jrxml";
 
     public byte[] exportInvestmentsToPdf(Pageable pageable) throws JRException {
         List<Investment> data = investmentRepository.findAll(pageable).getContent();
-        return generateReport("investments_template.jrxml", data, ExportFormat.PDF);
+        return generateReport(INVESTMENTS_TEMPLATE, data, ExportFormat.PDF);
     }
 
     public byte[] exportInvestmentsToCsv(Pageable pageable) throws JRException {
         List<Investment> data = investmentRepository.findAll(pageable).getContent();
-        return generateReport("investments_template.jrxml", data, ExportFormat.CSV);
+        return generateReport(INVESTMENTS_TEMPLATE, data, ExportFormat.CSV);
     }
 
     public byte[] exportInvestmentsToExcel(Pageable pageable) throws JRException {
         List<Investment> data = investmentRepository.findAll(pageable).getContent();
-        return generateReport("investments_template.jrxml", data, ExportFormat.EXCEL);
+        return generateReport(INVESTMENTS_TEMPLATE, data, ExportFormat.EXCEL);
     }
 
     private byte[] generateReport(String templatePath, List<Investment> data, ExportFormat format) throws JRException {

@@ -1,6 +1,5 @@
 package payment.adapters.rest;
 
-import com.stripe.exception.StripeException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -13,8 +12,8 @@ import payment.application.dto.In.PaymentRequest;
 import payment.application.dto.Out.PaymentCalendarResponse;
 import payment.application.dto.Out.PaymentResponse;
 import payment.application.usecase.*;
-import payment.config.JwtConfiguration;
-import payment.domain.exception.Invalid2FACodeException;
+
+import payment.domain.exception.InvalidJwtTokenException;
 import payment.domain.model.Payment;
 import payment.domain.model.PaymentCalendar;
 import payment.domain.model.PaymentMethod;
@@ -34,6 +33,7 @@ public class PaymentController {
     private final GetPaymentsUseCase getPaymentsUseCase;
     private final CancelPaymentUseCase cancelPaymentUseCase;
     private final PaymentDomainService paymentDomainService;
+    private static final String PAYMENT_NOT_FOUND = "Payment not found";
 
     private final JwtUtil jwtUtil; // Inject JWT config
 
@@ -48,9 +48,8 @@ public class PaymentController {
                 String token = authHeader.substring(7);  // remove "Bearer " prefix
                 String userId = jwtUtil.extractUserIdFromAccessToken(token);
                 request.setUserId(userId);
-                System.out.println("Extracted UserId from JWT: " + userId);
             } else {
-                throw new RuntimeException("JWT token missing or invalid.");
+                throw new InvalidJwtTokenException("JWT token missing or invalid.");
             }
 
             List<PaymentCalendar> payments = addPaymentUseCase.execute(request);
@@ -90,7 +89,7 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponse("Payment fetched successfully", List.of(payment)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new PaymentResponse("Payment not found"));
+                    .body(new PaymentResponse(PAYMENT_NOT_FOUND));
         }
     }
 
@@ -122,7 +121,7 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponse("Payment updated successfully", List.of(updatedPayment)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new PaymentResponse("Payment not found"));
+                    .body(new PaymentResponse(PAYMENT_NOT_FOUND));
         }
     }
 
@@ -136,7 +135,7 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponse("Payment postponed successfully", List.of(updatedPayment)));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new PaymentResponse("Payment not found"));
+                    .body(new PaymentResponse(PAYMENT_NOT_FOUND));
         }
     }
 
@@ -147,7 +146,7 @@ public class PaymentController {
             return ResponseEntity.ok(new PaymentResponse("Payment canceled successfully", List.of(updatedPayment)));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new PaymentResponse("Payment not found"));
+                    .body(new PaymentResponse(PAYMENT_NOT_FOUND));
         }
     }
 

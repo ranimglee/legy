@@ -3,9 +3,7 @@ package ordering.notification;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import ordering.domain.model.UserToken;
 import ordering.domain.repository.ModeratorTokenRepository;
-import ordering.domain.repository.UserTokenRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +14,7 @@ import shared.config.security.JwtUtil;
 @RequiredArgsConstructor
 @Slf4j
 public class ModeratorTokenController {
+    private static final String BEARER = "Bearer ";
 
     private final ModeratorTokenRepository tokenRepository;
     private final JwtUtil jwtUtil;
@@ -26,14 +25,14 @@ public class ModeratorTokenController {
             @RequestHeader("Authorization") String authHeader,
             @RequestBody String fcmToken
     ) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(BEARER)) {
             return ResponseEntity.badRequest().build();
         }
         if (fcmToken == null || fcmToken.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         try {
-            String userId = jwtUtil.extractUserIdFromAccessToken(authHeader.replace("Bearer ", ""));
+            String userId = jwtUtil.extractUserIdFromAccessToken(authHeader.replace(BEARER, ""));
             tokenRepository.saveToken(userId, fcmToken);
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
@@ -51,7 +50,7 @@ public class ModeratorTokenController {
             @RequestHeader("Authorization") String authHeader,
             @RequestBody String fcmToken
     ) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || !authHeader.startsWith(BEARER)) {
             log.warn("Missing or invalid Authorization header");
             return ResponseEntity.badRequest().build();
         }
@@ -59,7 +58,7 @@ public class ModeratorTokenController {
             return ResponseEntity.badRequest().build();
         }
         try {
-            String userId = jwtUtil.extractUserIdFromAccessToken(authHeader.replace("Bearer ", ""));
+            String userId = jwtUtil.extractUserIdFromAccessToken(authHeader.replace(BEARER, ""));
             userTokenService.saveToken(userId, fcmToken);
             log.info("FCM token saved for client: {}", userId);
             return ResponseEntity.ok().build();

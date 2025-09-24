@@ -15,6 +15,7 @@ import java.io.IOException;
 
 @Service
 public class PayslipPdfService {
+    private static final String CURRENCY_FORMAT = "%.2f €";
 
     public byte[] generatePayslipPdf(RestaurantPayslipDTO payslip) throws IOException {
         try (PDDocument document = new PDDocument()) {
@@ -75,7 +76,6 @@ public class PayslipPdfService {
             float rowHeight = 25;
             float tableWidth = usableWidth;
             float col1Width = tableWidth * 0.7f;
-            float col2Width = tableWidth * 0.3f;
 
             // Draw rows and columns
             for (int i = 0; i <= 3; i++) {
@@ -94,11 +94,10 @@ public class PayslipPdfService {
             content.stroke();
 
             // Table values
-            float textYOffset = 7;
             String[][] tableData = {
-                    {"Chiffre d'affaires total", String.format("%.2f €", payslip.getTotalRevenue())},
-                    {"Commission totale", String.format("%.2f €", payslip.getTotalCommission())},
-                    {"Montant net", String.format("%.2f €", payslip.getNetAmount())}
+                    {"Chiffre d'affaires total", String.format(CURRENCY_FORMAT, payslip.getTotalRevenue())},
+                    {"Commission totale", String.format(CURRENCY_FORMAT, payslip.getTotalCommission())},
+                    {"Montant net", String.format(CURRENCY_FORMAT, payslip.getNetAmount())}
             };
 
             for (int i = 0; i < tableData.length; i++) {
