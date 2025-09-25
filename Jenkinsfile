@@ -11,8 +11,7 @@ pipeline {
            PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
            IMAGE_NAME = 'ranimglee/leggy-application'
            SONAR_TOKEN = credentials('sonarqube-token')
-           NEXUS_USER = credentials('nexus-username')   // store in Jenkins credentials
-           NEXUS_PASS = credentials('nexus-password')
+
 
 
        }
