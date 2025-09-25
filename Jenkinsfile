@@ -54,7 +54,7 @@ stage('Deploy to Nexus') {
                     sh """
                         mvn sonar:sonar \
                           -Dsonar.projectKey=legy \
-                          -Dsonar.host.url=http://192.168.56.108:9000 \
+                          -Dsonar.host.url=http://sonarqube:9000 \
                           -Dsonar.login=${SONAR_TOKEN}
                     """
                 }
