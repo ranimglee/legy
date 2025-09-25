@@ -5,15 +5,15 @@ scrape_configs:
   - job_name: 'prometheus'
     metrics_path: '/metrics'  # Default metrics path if using Prometheus plugin in Jenkins
     static_configs:
-      - targets: [ '192.168.56.108:9090' ]
+      - targets: [ 'localhost:9090' ]
 
   - job_name: 'spring-boot-app'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      - targets: [ '192.168.56.108:8084' ]
+      - targets: [ 'localhost:8084' ]
   
 
   - job_name: 'jenkins'
     metrics_path: '/prometheus'  # Default metrics path if using Prometheus plugin in Jenkins
     static_configs:
-      - targets: ['192.168.56.108:8080']
+      - targets: ['localhost:8080']
