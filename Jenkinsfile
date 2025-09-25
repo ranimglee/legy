@@ -13,6 +13,7 @@ pipeline {
            SONAR_TOKEN = credentials('sonarqube-token')
 
 
+
        }
 
     stages {
@@ -27,6 +28,7 @@ pipeline {
                 sh  'mvn clean install -DskipTests'
             }
         }
+
        stage('Test with Coverage') {
          steps {
            sh 'mvn test'
@@ -34,18 +36,21 @@ pipeline {
        }
 
 
- stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('SonarQubeServer') { // Le nom de ton serveur SonarQube configuré
-                    sh """
-                        mvn sonar:sonar \
-                          -Dsonar.projectKey=legy \
-                          -Dsonar.host.url=http://192.168.56.108:9000 \
-                          -Dsonar.login=${SONAR_TOKEN}
-                    """
-                }
+stage('SonarQube Analysis') {
+    steps {
+        withSonarQubeEnv('SonarQubeServer') { // Utilise la config Jenkins pour SonarQube
+            withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                sh '''
+                    mvn sonar:sonar \
+                      -Dsonar.projectKey=legy \
+                      -Dsonar.host.url=http://192.168.56.108:9000 \
+                      -Dsonar.login=$SONAR_TOKEN
+                '''
             }
         }
+    }
+}
+
 
 
 

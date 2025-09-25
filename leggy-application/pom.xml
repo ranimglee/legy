@@ -220,7 +220,13 @@
 
         <!-- Add other dependencies as needed (e.g., security, devtools, etc.) -->
     </dependencies>
-
+    <distributionManagement>
+        <repository>
+            <id>deploymentRepo</id>
+            <name>Nexus Repository</name>
+            <url>http://192.168.56.108:8081/repository/maven-releases/</url>
+        </repository>
+    </distributionManagement>
     <build>
         <plugins>
             <!-- Optional: If you need to override or configure the Spring Boot Maven Plugin -->
