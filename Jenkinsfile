@@ -62,12 +62,6 @@ stage('Deploy to Nexus') {
         }
 
 
-
-        stage('Run App Container') {
-            steps {
-                sh 'docker ps'
-            }
-        }
          stage('Health Check - Prometheus') {
                     steps {
                         sh '''
