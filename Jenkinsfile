@@ -11,7 +11,8 @@ pipeline {
            PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
            IMAGE_NAME = 'ranimglee/leggy-application'
            SONAR_TOKEN = credentials('sonarqube-token')
-
+           NEXUS_USER = credentials('nexus-username')   // store in Jenkins credentials
+           NEXUS_PASS = credentials('nexus-password')
 
 
        }
@@ -28,6 +29,28 @@ pipeline {
                 sh  'mvn clean install -DskipTests'
             }
         }
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                      mkdir -p ~/.m2
+                      cat > ~/.m2/settings.xml <<EOF
+                      <settings>
+                        <servers>
+                          <server>
+                            <id>nexus</id>
+                            <username>${NEXUS_USER}</username>
+                            <password>${NEXUS_PASS}</password>
+                          </server>
+                        </servers>
+                      </settings>
+                      EOF
+                      mvn deploy
+                    """
+                }
+            }
+        }
+
 
        stage('Test with Coverage') {
          steps {
