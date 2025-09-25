@@ -43,8 +43,6 @@ pipeline {
                           </server>
                         </servers>
                       </settings>
-                      EOF
-                      mvn deploy
                     """
                 }
             }
