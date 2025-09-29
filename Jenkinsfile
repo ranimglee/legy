@@ -11,6 +11,8 @@ pipeline {
            PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
            IMAGE_NAME = 'ranimglee/leggy-application'
            SONAR_TOKEN = credentials('sonarqube-token')
+           K8S_NAMESPACE = 'leggy'
+
 
 
 
@@ -30,15 +32,6 @@ pipeline {
         }
 
 
-stage('Deploy to Nexus') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-            sh """
-                mvn deploy -Dusername=${NEXUS_USER} -Dpassword=${NEXUS_PASS}
-            """
-        }
-    }
-}
 
 
        stage('Test with Coverage') {
@@ -75,21 +68,17 @@ stage('Deploy to Nexus') {
        }
 
 
-        stage('Run Dependencies') {
+       stage('Deploy to Kubernetes') {
                  steps {
-                     sh '''
-                       docker-compose down
-                       docker-compose up -d
-                     '''
+                     sh """
+                       kubectl apply -f k8s/namespace.yaml
+                       kubectl apply -f k8s/redis.yaml
+                       kubectl apply -f k8s/zookeeper.yaml
+                       kubectl apply -f k8s/kafka.yaml
+                       kubectl apply -f k8s/leggy-application.yaml
+                     """
                  }
              }
-
-
-        stage('Run App Container') {
-            steps {
-                sh 'docker ps'
-            }
-        }
          stage('Health Check - Prometheus') {
                     steps {
                         sh '''

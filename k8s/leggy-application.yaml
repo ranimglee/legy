@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leggy-application
+  namespace: leggy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leggy-application
+  template:
+    metadata:
+      labels:
+        app: leggy-application
+    spec:
+      containers:
+        - name: leggy-application
+          image: ranimglee/leggy-application:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: "mongodb+srv://ranimabbessi:Y3whR02H5skyatm2@cluster0.mtilp.mongodb.net/legy?retryWrites=true&w=majority&appName=Cluster0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: leggy-application
+  namespace: leggy
+spec:
+  selector:
+    app: leggy-application
+  ports:
+    - protocol: TCP
+      port: 8084
+      targetPort: 8084
+  type: ClusterIP
