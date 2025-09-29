@@ -73,10 +73,26 @@ services:
       SPRING_DATA_MONGODB_URI: "mongodb+srv://ranimabbessi:Y3whR02H5skyatm2@cluster0.mtilp.mongodb.net/legy?retryWrites=true&w=majority&appName=Cluster0"
     networks:
       - leggy-network
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
+    container_name: jenkins1
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock  # 🔑 mount host Docker socket
+    networks:
+      - leggy-network
+
 
 volumes:
   redis-data:
   grafana-storage:
+  jenkins_home:
 
 networks:
   leggy-network:
