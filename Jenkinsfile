@@ -12,6 +12,7 @@ pipeline {
            IMAGE_NAME = 'ranimglee/leggy-application'
            SONAR_TOKEN = credentials('sonarqube-token')
            K8S_NAMESPACE = 'leggy'
+           KUBECONFIG = '/var/jenkins_home/.kube/config'
 
 
 
@@ -70,13 +71,14 @@ pipeline {
 
        stage('Deploy to Kubernetes') {
                  steps {
-                     sh """
+                     sh '''
+                       echo "Deploying to Kubernetes namespace: ${K8S_NAMESPACE}"
                        kubectl apply -f k8s/namespace.yaml
                        kubectl apply -f k8s/redis.yaml
                        kubectl apply -f k8s/zookeeper.yaml
                        kubectl apply -f k8s/kafka.yaml
                        kubectl apply -f k8s/leggy-application.yaml
-                     """
+                     '''
                  }
              }
          stage('Health Check - Prometheus') {
