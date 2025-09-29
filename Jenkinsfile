@@ -30,7 +30,15 @@ pipeline {
         }
 
 
-
+stage('Deploy to Nexus') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'nexus-creds', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+            sh """
+                mvn deploy -Dusername=${NEXUS_USER} -Dpassword=${NEXUS_PASS}
+            """
+        }
+    }
+}
 
 
        stage('Test with Coverage') {
