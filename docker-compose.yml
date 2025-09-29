@@ -46,7 +46,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-config:/etc/prometheus
     networks:
       - leggy-network
 
@@ -79,6 +79,8 @@ services:
 volumes:
   redis-data:
   grafana-storage:
+  prometheus-config:
+
 
 networks:
   leggy-network:
