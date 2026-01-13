@@ -71,6 +71,21 @@ These themes align with research areas explored in graduate-level studies and ca
    ```bash
    mvn clean install
 
-4.Run locally with Docker and Docker-Compose
+4. Run locally with Docker and Docker-Compose
 
-5.Explore APIs with Swagger or Postman
+5. Explore APIs with Swagger or Postman
+
+🧾 Additional Notes
+
+This system was designed with real constraints in mind (e.g., monolithic deployment due to resource limits) yet follows principles normally applied in more distributed systems.
+
+👩‍💻 About the Author
+
+Ranim Abassi — Software Engineer & PhD candidate aspirant
+🔗 https://www.linkedin.com/in/ranim-abassi/
+📧 ranim.abassi20@gmail.com
+
+
+
+
+
