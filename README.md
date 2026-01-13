@@ -70,3 +70,7 @@ These themes align with research areas explored in graduate-level studies and ca
 3. Build with Maven:  
    ```bash
    mvn clean install
+
+4.Run locally with Docker and Docker-Compose
+
+5.Explore APIs with Swagger or Postman
